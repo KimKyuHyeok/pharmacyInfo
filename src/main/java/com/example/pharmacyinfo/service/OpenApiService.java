@@ -1,6 +1,7 @@
 package com.example.pharmacyinfo.service;
 
 import com.example.pharmacyinfo.entity.Pharmacy;
+import com.example.pharmacyinfo.entity.PharmacyResponse;
 import com.example.pharmacyinfo.repository.OpenApiRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,13 @@ public class OpenApiService {
     private String apiURL;
 
     private final OpenApiRepository openApiRepository;
+
+    public List<PharmacyResponse> responsesDataList() {
+
+        List<PharmacyResponse> list = entityToResponse(openApiRepository.findAll());
+
+        return list;
+    }
 
     public void getOpenApiDataList() {
 
@@ -70,6 +78,7 @@ public class OpenApiService {
         }
     }
 
+    // tag 값 가져오기
     private static String getTagValue(String tag, Element element) {
         NodeList list = element.getElementsByTagName(tag).item(0).getChildNodes();
         Node value = (Node) list.item(0);
@@ -80,6 +89,7 @@ public class OpenApiService {
         return value.getNodeValue();
     }
 
+    // tag 값 entity 변환
     private static Pharmacy pharmacyBuild (Element element) {
         Pharmacy pharmacy = Pharmacy.builder()
                 .address(getTagValue("DUTYADDR", element))
@@ -108,12 +118,15 @@ public class OpenApiService {
         return pharmacy;
     }
 
+    // 데이터 최신화
     @Transactional
     public void savePharmacyList(List<Pharmacy> saveList) {
         openApiRepository.deleteAll();
         openApiRepository.saveAll(saveList);
     }
 
+
+    // API 총 데이터 개수 가져오기
     public int getTotal() throws Exception {
 
         String url = apiURL + "1/2";
@@ -130,6 +143,34 @@ public class OpenApiService {
         int total = Integer.parseInt(tntEle.getTextContent());
 
         return total;
+    }
+
+    // entity 데이터 response 데이터로 변환
+    public List<PharmacyResponse> entityToResponse(List<Pharmacy> pharmacies) {
+
+        List<PharmacyResponse> responses = new ArrayList<>();
+
+        for (Pharmacy pharmacy : pharmacies) {
+            PharmacyResponse response = PharmacyResponse.builder()
+                    .name(pharmacy.getName())
+                    .address(pharmacy.getAddress())
+                    .telNumber(pharmacy.getTelNumber())
+                    .mon(pharmacy.getMonStart() + "-" + pharmacy.getMonEnd())
+                    .tue(pharmacy.getTueStart() + "-" + pharmacy.getTueEnd())
+                    .wed(pharmacy.getWedStart() + "-" + pharmacy.getWedEnd())
+                    .thu(pharmacy.getThuStart() + "-" + pharmacy.getThuEnd())
+                    .fri(pharmacy.getFriStart() + "-" + pharmacy.getFriEnd())
+                    .sat(pharmacy.getSatStart() + "-" + pharmacy.getSatEnd())
+                    .sun(pharmacy.getSunStart() + "-" + pharmacy.getSunEnd())
+                    .hol(pharmacy.getHolStart() + "-" + pharmacy.getHolEnd())
+                    .lon(pharmacy.getLon())
+                    .lat(pharmacy.getLat())
+                    .build();
+
+            responses.add(response);
+        }
+
+        return responses;
     }
 
 
